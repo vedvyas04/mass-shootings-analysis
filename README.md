@@ -1,7 +1,7 @@
 
 <h1> Mass Shootings Analysis </h1>
 
-<h2> This is my project for Introduction to Data Managment and Processing (DS-5110) at Northeastern University. </h2>
+<h3> This is my project for Introduction to Data Managment and Processing (DS-5110) at Northeastern University. </h3>
 
 <p> Mass shootings have grabbed attention over the recent years due to their growing numbers and frequency of incidence. 
 Studies have shown that mass shootings have increased over the years, and there have been more mass shootings in the United States than any other country. 
