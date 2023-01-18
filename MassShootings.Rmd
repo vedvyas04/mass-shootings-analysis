@@ -1,0 +1,307 @@
+---
+title: "MassShootings"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library('ggplot2')
+library("tidyverse")
+library("choroplethr")
+library("dplyr")
+library("ggridges")
+library("viridis")
+library("maps")
+```
+
+
+```{r}
+data_ms <- read.csv("D:/NEU/Assignments/DS 5110/Project/Mass_Shootings_Final_Data.csv")
+summary(data_ms)
+```
+
+
+```{r}
+head(data_ms)
+
+```
+
+More things to visualize if we join the datasets - 
+1. Open.Close Location
+2. Target
+3. Cause
+
+```{r}
+# Changing the dates so that they're in the same formate
+data_ms$Date[data_ms$Date == "3/31/21"] <- "3/31/2021"
+data_ms$Date[data_ms$Date == "3/22/21"] <- "3/22/2021"
+data_ms$Date[data_ms$Date == "3/16/20"] <- "3/16/2020"
+data_ms$Date[data_ms$Date == "2/26/20"] <- "2/26/2020"
+data_ms$Date[data_ms$Date == "12/6/19"] <- "12/6/2019"
+data_ms$Date[data_ms$Date == "8/4/19"] <- "8/4/2019"
+data_ms$Date[data_ms$Date == "8/3/19"] <- "8/3/2019"
+data_ms$Date[data_ms$Date == "7/28/19"] <- "7/28/2019"
+data_ms$Date[data_ms$Date == "5/31/19"] <- "5/31/2019"
+data_ms$Date[data_ms$Date == "2/15/19"] <- "2/15/2019"
+data_ms$Date[data_ms$Date == "1/23/19"] <- "1/23/2019"
+data_ms$Date[data_ms$Date == "11/19/18"] <- "11/19/2018"
+data_ms$Date[data_ms$Date == "11/7/18"] <- "11/7/2018"
+data_ms$Date[data_ms$Date == "10/27/18"] <- "10/27/2018"
+data_ms$Date[data_ms$Date == "9/20/18"] <- "9/20/2018"
+data_ms$Date[data_ms$Date == "9/6/18"] <- "9/6/2018"
+data_ms$Date[data_ms$Date == "6/28/18"] <- "6/28/2018"
+data_ms$Date[data_ms$Date == "5/18/18"] <- "5/18/2018"
+data_ms$Date[data_ms$Date == "4/22/18"] <- "4/22/2018"
+data_ms$Date[data_ms$Date == "3/9/18"] <- "3/9/2018"
+data_ms$Date[data_ms$Date == "2/14/18"] <- "2/14/2018"
+data_ms$Date[data_ms$Date == "1/28/18"] <- "1/28/2018"
+
+```	
+
+
+```{r}
+#Copy of dataset
+data_msedited2 <- data_ms
+head(data_msedited2)
+```
+
+```{r}
+
+Guncontroldata <- read.csv("D:/NEU/Assignments/DS 5110/Project/gun_control.csv")
+
+head(Guncontroldata)
+```
+
+```{r}
+data_msedited2<-separate(data_msedited2, Location, into = c("Location", "State"), sep=", ")
+head(data_msedited2)
+```
+
+
+```{r}
+data_msedited2$State[data_msedited2$State == "TX"] <- "Texas"
+data_msedited2$State[data_msedited2$State == "CO"] <- "Colorado"
+data_msedited2$State[data_msedited2$State == "MD"] <- "Maryland"
+data_msedited2$State[data_msedited2$State == "NV"] <- "Nevada"
+data_msedited2$State[data_msedited2$State == "CA"] <- "California"
+data_msedited2$State[data_msedited2$State == "PA"] <- "Pennsylvania"
+data_msedited2$State[data_msedited2$State == "WA"] <- "Washington"
+data_msedited2$State[data_msedited2$State == "LA"] <- "Louisiana"
+#data1$Mental.Health.Issues[data1$Mental.Health.Issues == "unknown"] <- "Unknown"
+```
+
+```{r}
+data_msedited2 <- rename(data_msedited2, region=State)
+data_msedited2$region <- tolower(data_msedited2$region)
+data_msforgunprovision <- data_msedited2
+head(data_msedited2)
+```
+```{r}
+data_msedited2<-data_msedited2[!(is.na(data_msedited2$Latitude) | data_msedited2$Latitude==""), ]
+data_msedited2<-data_msedited2[!(is.na(data_msedited2$region) | data_msedited2$region==""), ]
+head(data_msedited2)
+```
+```{r}
+States <- map_data("state")
+MergedStates <-inner_join(MainStates, data_msedited2, by = "region")
+MergedStates
+n <- ggplot()
+n <- n + geom_polygon( data=MergedStates, aes(x=long, y=lat, group=group, fill = Total.victims),
+                color="white", size = 1.0)
+n <- n + scale_fill_continuous(name="Total Victims", 
+            low = "red", high = "red4", 
+             na.value = "grey50") +
+
+          labs(title="Total Victims")
+n
+```
+```{r}
+Cities <- us.cities
+Cities<-separate(Cities, name, into = c("Location", "State"), sep=" ")
+Cities <- filter(Cities, long>=-130)
+Cities<-Cities[!Cities$State== "Cruces",]
+Cities$Location[Cities$Location == "Las"] <- "Las Vegas"
+MergedCities <-inner_join(Cities, data_msedited2, by = "Location")
+head(MergedCities)
+q <- ggplot()
+q <- q + geom_polygon( data=MergedStates, aes(x=long, y=lat, group=group, color="white"),
+                color="white", size = 1.0)+
+  geom_point(data=MergedCities, aes(x=long, y=lat, size = Total.victims), color="red") + 
+   scale_size(name="Total Victims")+
+        labs(title="Total Victims corresponding to location")
+q <- q + scale_fill_discrete(name="Total Victims", 
+             na.value = "grey50") 
+  
+       
+q
+```
+```{r}
+data_msforgunprovision<-separate(data_msforgunprovision, Date, into = c("Month", "Day", "Year"), sep="/")
+
+```
+```{r}
+head(data_msforgunprovision)
+```
+
+```{r}
+data_msforgunprovision %>%
+     group_by(Year) %>% 
+     tally()
+```
+```{r}
+MainStates2 <- map_data("state")
+data_msforgunprovision2014 <- filter(data_msforgunprovision, Year==2014)
+data_msforgunprovision2014
+MergedStates2 <-left_join(MainStates2, data_msforgunprovision2014, by = "region")
+```
+
+```{r}
+s <- ggplot()
+s <- s + geom_polygon( data=MergedStates2, aes(x=long, y=lat, group=group, fill=Total.victims),
+                color="white", size = 1.0)
+s <- s + scale_fill_continuous(name="Number of Victims", 
+            low = "red", high = "red4", 
+             na.value = "grey50") +
+
+          labs(title="Total Victims in 2014")
+s
+
+```
+```{r}
+tt2014<-Guncontroldata %>% dplyr::filter(year==2014) %>% 
+  dplyr::select(state,lawtotal) %>% 
+  dplyr::rename(region=state,value=lawtotal) %>% 
+  dplyr::mutate(region=tolower(region),
+         value = round(100*(value/133),0))
+choro = StateChoropleth$new(tt2014)
+choro$title  = "Firearms Regulations acceptance in 2014"
+choro$ggplot_scale = scale_fill_manual(name="percentage", values = rev(viridis::viridis(10)),drop=FALSE)
+choro$render()
+```
+```{r}
+data_msforgunprovision2015 <- filter(data_msforgunprovision, Year==2015)
+MergedStates2 <-left_join(MainStates2, data_msforgunprovision2015, by = "region")
+a <- ggplot()
+a <- a + geom_polygon( data=MergedStates2, aes(x=long, y=lat, group=group, fill=Total.victims),
+                color="white", size = 1.0)
+a <- a + scale_fill_continuous(name="Number of Victims", 
+            low = "red", high = "red4", 
+             na.value = "grey50") +
+
+          labs(title="Total Victims in 2015")
+a
+
+```
+```{r}
+tt2015<-Guncontroldata %>% dplyr::filter(year==2015) %>% 
+  dplyr::select(state,lawtotal) %>% 
+  dplyr::rename(region=state,value=lawtotal) %>% 
+  dplyr::mutate(region=tolower(region),
+         value = round(100*(value/133),0))
+choro = StateChoropleth$new(tt2015)
+choro$title  = "Firearms Regulations acceptance in 2015"
+choro$ggplot_scale = scale_fill_manual(name="percentage", values = rev(viridis::viridis(10)),drop=FALSE)
+choro$render()
+```
+```{r}
+data_msforgunprovision2016 <- filter(data_msforgunprovision, Year==2016)
+MergedStates2 <-left_join(MainStates2, data_msforgunprovision2016, by = "region")
+b <- ggplot()
+b <- b + geom_polygon( data=MergedStates2, aes(x=long, y=lat, group=group, fill=Total.victims),
+                color="white", size = 1.0)
+b <- b + scale_fill_continuous(name="Number of Victims", 
+            low = "red", high = "red4", 
+             na.value = "grey50") +
+
+          labs(title="Total Victims in 2016")
+b
+
+```
+```{r}
+tt2016<-Guncontroldata %>% dplyr::filter(year==2016) %>% 
+  dplyr::select(state,lawtotal) %>% 
+  dplyr::rename(region=state,value=lawtotal) %>% 
+  dplyr::mutate(region=tolower(region),
+         value = round(100*(value/133),0))
+choro = StateChoropleth$new(tt2016)
+choro$title  = "Firearms Regulations acceptance in 2016"
+choro$ggplot_scale = scale_fill_manual(name="percentage", values = rev(viridis::viridis(10)),drop=FALSE)
+choro$render()
+```
+
+```{r}
+data_msforgunprovision2017 <- filter(data_msforgunprovision, Year==2017)
+MergedStates2 <-left_join(MainStates2, data_msforgunprovision2017, by = "region")
+c <- ggplot()
+c <- c + geom_polygon( data=MergedStates2, aes(x=long, y=lat, group=group, fill=Total.victims),
+                color="white", size = 1.0)
+c <- c + scale_fill_continuous(name="Number of Victims", 
+            low = "red", high = "red4", 
+             na.value = "grey50") +
+
+          labs(title="Total Victims in 2017")
+c
+
+```
+
+```{r}
+tt2017<-Guncontroldata %>% dplyr::filter(year==2017) %>% 
+  dplyr::select(state,lawtotal) %>% 
+  dplyr::rename(region=state,value=lawtotal) %>% 
+  dplyr::mutate(region=tolower(region),
+         value = round(100*(value/133),0))
+choro = StateChoropleth$new(tt2017)
+choro$title  = "Firearms Regulations acceptance in 2017"
+choro$ggplot_scale = scale_fill_manual(name="percentage", values = rev(viridis::viridis(10)),drop=FALSE)
+choro$render()
+```
+
+```{r}
+head(data_msforgunprovision)
+data_msforsi <- data_msforgunprovision
+```
+```{r}
+
+mean(data_msforsi$Total.victims)
+
+ggplot(data_msforsi, aes(x=Total.victims)) + 
+  geom_histogram(binwidth=50) +
+  #labs(x="Price (US$)",
+  #     title="Distribution of diamond price") +
+  theme_minimal()
+```
+
+
+```{r}
+# data2formodel <- data2edited2
+data2formodel <- data_msedited2
+head(data2formodel)
+data2formodel$Mental.Health.Issues[data2formodel$Mental.Health.Issues == "Unknown"] <- ""
+data2formodel$Mental.Health.Issues[data2formodel$Mental.Health.Issues == "unknown"] <- ""
+data2formodel$Mental.Health.Issues[data2formodel$Mental.Health.Issues == "Unclear"] <- ""
+data2formodel<-data2formodel[!(is.na(data2formodel$Mental.Health.Issues) | data2formodel$Mental.Health.Issues==""), ]
+```
+
+```{r}
+library(modelr)
+```
+```{r}
+fit <- lm(Total.victims ~ Mental.Health.Issues, data=data2formodel)
+```
+
+```{r}
+data2formodel %>%
+  add_predictions(fit) %>%
+  ggplot(aes(x=Mental.Health.Issues, y=Total.victims)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  geom_segment(aes(xend=Mental.Health.Issues, yend=pred), color="red") +
+  theme_minimal()
+```
+
+```{r}
+summary(fit)
+```
